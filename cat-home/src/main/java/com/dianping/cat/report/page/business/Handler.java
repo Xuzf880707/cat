@@ -59,7 +59,7 @@ public class Handler implements PageHandler<Context> {
 	public void handleInbound(Context ctx) throws ServletException, IOException {
 		// display only, no action here
 	}
-
+	//查询业务配置
 	@Override
 	@OutboundActionMeta(name = "business")
 	public void handleOutbound(Context ctx) throws ServletException, IOException {
@@ -104,8 +104,9 @@ public class Handler implements PageHandler<Context> {
 
 		return allCharts;
 	}
-
+	//TODO 这边需要权限控制
 	private void normalize(Model model, Payload payload) {
+		//查询所有的domain
 		model.setDomains(m_projectService.findAllDomains());
 		model.setTags(m_tagConfigManager.findAllTags());
 		model.setPage(ReportPage.BUSINESS);

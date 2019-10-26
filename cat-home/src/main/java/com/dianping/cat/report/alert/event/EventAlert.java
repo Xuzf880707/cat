@@ -62,7 +62,7 @@ public class EventAlert implements Task, LogEnabled {
 
 	protected static final long DURATION = TimeHelper.ONE_MINUTE;
 
-	private static final int DATA_AREADY_MINUTE = 1;
+	private static final int DATA_ALREADY_MINUTE = 1;
 
 	private static String MIN = "min";
 
@@ -82,7 +82,8 @@ public class EventAlert implements Task, LogEnabled {
 	protected AlertManager m_sendManager;
 
 	protected Logger m_logger;
-
+	//com.dianping.cat.report.page.event.service.CompositeEventService
+	//com.dianping.cat.report.service.BaseCompositeModelService
 	@Inject(type = ModelService.class, value = EventAnalyzer.ID)
 	private ModelService<EventReport> m_service;
 
@@ -114,18 +115,47 @@ public class EventAlert implements Task, LogEnabled {
 
 		return result;
 	}
-
+	//获得上一分钟
 	protected int calAlreadyMinute() {
-		long current = (System.currentTimeMillis()) / 1000 / 60;
-		int minute = (int) (current % (60)) - DATA_AREADY_MINUTE;
+		//获得当前时间 -1
+		long current = (System.currentTimeMillis()) / 1000 / 60;//分钟
+		int minute = (int) (current % (60)) - DATA_ALREADY_MINUTE;
 
 		return minute;
 	}
 
+	/***
+	 *
+	 * @param domain 项目名
+	 * @param type 告警配置信息中的Type
+	 * @param name 告警配置信息中的name
+	 * @param monitor 告警配置信息中的监控项
+	 * @param configs 告警配置信息中的监控规则
+	 *<monitor-rules>
+	 *    <rule id="cat;URL;URL.Method;count" available="true">
+	 *       <config starttime="00:00" endtime="24:00">
+	 *          <condition minute="1" alertType="warning">
+	 *             <sub-condition type="MaxVal" text="3000"/>
+	 *          </condition>
+	 *       </config>
+	 *    </rule>
+	 *    <rule id="cat;URL;URL.Method;failRatio" available="false">
+	 *       <config starttime="00:00" endtime="24:00">
+	 *          <condition minute="1" alertType="warning">
+	 *             <sub-condition type="MaxVal" text="0.1"/>
+	 *          </condition>
+	 *       </config>
+	 *    </rule>
+	 * </monitor-rules>
+	 *
+	 * @return
+	 */
 	private List<DataCheckEntity> computeAlertForRule(String domain, String type, String name, String monitor,
 							List<Config> configs) {
 		List<DataCheckEntity> results = new ArrayList<DataCheckEntity>();
+		//分别所有config下的condition标签，然后key是配置的最大的miniutes
 		Pair<Integer, List<Condition>> conditionPair = m_ruleConfigManager.convertConditions(configs);
+		//获得当前时间的上一分钟
 		int minute = calAlreadyMinute();
 		Map<String, String> pars = new HashMap<String, String>();
 
@@ -133,12 +163,13 @@ public class EventAlert implements Task, LogEnabled {
 		pars.put("name", name);
 
 		if (conditionPair != null) {
-			int maxMinute = conditionPair.getKey();
-			List<Condition> conditions = conditionPair.getValue();
-
+			int maxMinute = conditionPair.getKey();//获得规则配置的最大持续时间
+			List<Condition> conditions = conditionPair.getValue();//获得规则
+			//如果规则的名称是空的，默认是ALL
 			if (StringUtils.isEmpty(name)) {
 				name = Constants.ALL;
 			}
+			//如果上一分钟的时间
 			if (minute >= maxMinute - 1) {
 				int start = minute + 1 - maxMinute;
 				int end = minute;
@@ -205,7 +236,7 @@ public class EventAlert implements Task, LogEnabled {
 								.setProperty("requireAll", "true");
 
 		request.getProperties().putAll(pars);
-
+		//com.dianping.cat.report.service.BaseCompositeModelService
 		ModelResponse<EventReport> response = m_service.invoke(request);
 
 		if (response != null) {
@@ -238,12 +269,32 @@ public class EventAlert implements Task, LogEnabled {
 		return result;
 	}
 
+	/***
+	 * 处理Config表中eventRule的信息
+	 * @param rule
+	 * <monitor-rules>
+	 *    <rule id="cat;URL;URL.Method;count" available="true">
+	 *       <config starttime="00:00" endtime="24:00">
+	 *          <condition minute="1" alertType="warning">
+	 *             <sub-condition type="MaxVal" text="3000"/>
+	 *          </condition>
+	 *       </config>
+	 *    </rule>
+	 *    <rule id="cat;URL;URL.Method;failRatio" available="false">
+	 *       <config starttime="00:00" endtime="24:00">
+	 *          <condition minute="1" alertType="warning">
+	 *             <sub-condition type="MaxVal" text="0.1"/>
+	 *          </condition>
+	 *       </config>
+	 *    </rule>
+	 * </monitor-rules>
+	 */
 	private void processRule(Rule rule) {
 		List<String> fields = Splitters.by(";").split(rule.getId());
-		String domain = fields.get(0);
-		String type = fields.get(1);
-		String name = fields.get(2);
-		String monitor = fields.get(3);
+		String domain = fields.get(0);//获得项目名称
+		String type = fields.get(1);//获得Type
+		String name = fields.get(2);//获得Name
+		String monitor = fields.get(3);//获得监控项：
 
 		List<DataCheckEntity> alertResults = computeAlertForRule(domain, type, name, monitor, rule.getConfigs());
 		for (DataCheckEntity alertResult : alertResults) {
@@ -256,19 +307,30 @@ public class EventAlert implements Task, LogEnabled {
 		}
 	}
 
+	/***
+	 * m_config是在启动的时候初始化好了
+	 *
+	 */
 	@Override
 	public void run() {
 		boolean active = TimeHelper.sleepToNextMinute();
 
 		while (active) {
-			Transaction t = Cat.newTransaction("AlertEvent", TimeHelper.getMinuteStr());
+			//当前时间-分
+ 			Transaction t = Cat.newTransaction("AlertEvent", TimeHelper.getMinuteStr());
 			long current = System.currentTimeMillis();
 
 			try {
+				//获得Config表中配置的规则，name=eventRule
 				MonitorRules monitorRules = m_ruleConfigManager.getMonitorRules();
+				//获得所有的监控的规则
 				Map<String, Rule> rules = monitorRules.getRules();
-
+				//遍历告警规则
 				for (Entry<String, Rule> entry : rules.entrySet()) {
+					//Event告警开关是关的，则继续下一个
+					if (!entry.getValue().getAvailable()) {
+						continue;
+					}
 					try {
 						processRule(entry.getValue());
 					} catch (Exception e) {

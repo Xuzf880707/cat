@@ -97,15 +97,20 @@ public final class TcpSocketReceiver implements LogEnabled {
 			m_logger.error(e.getMessage(), e);
 		}
 	}
-
+	//启动消息接收端，用来接收客户端上报的数据
 	public synchronized void startServer(int port) throws InterruptedException {
 		boolean linux = getOSMatches("Linux") || getOSMatches("LINUX");
 		int threads = 24;
+		//创建ServerBootstrap对象，ServerBootstrap 是一个启动Epoll(非Linux为NIO)服务的辅助启动类，
+		// 他将设置bossGroup和workerGroup两个多线程时间循环器。
 		ServerBootstrap bootstrap = new ServerBootstrap();
-
+		//创建EventLoopGroup对象， EventLoopGroup是用来处理IO操作的多线程事件循环器，
+		//m_bossGroup作为一个acceptor负责接收来自客户端的请求，
+		// 然后分发给m_workerGroup用来所有的事件event和channel的IO。
 		m_bossGroup = linux ? new EpollEventLoopGroup(threads) : new NioEventLoopGroup(threads);
 		m_workerGroup = linux ? new EpollEventLoopGroup(threads) : new NioEventLoopGroup(threads);
 		bootstrap.group(m_bossGroup, m_workerGroup);
+		//ChannelFactory创建的就是EpollServerSocketChannel/NioServerSocketChannel的实例。
 		bootstrap.channel(linux ? EpollServerSocketChannel.class : NioServerSocketChannel.class);
 
 		bootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
@@ -130,7 +135,7 @@ public final class TcpSocketReceiver implements LogEnabled {
 			m_logger.error("Started Netty Server Failed:" + port, e);
 		}
 	}
-
+	//对客户端上报的消息进行解码，并交给consumer进行处理
 	public class MessageDecoder extends ByteToMessageDecoder {
 		private long m_processCount;
 
@@ -139,9 +144,9 @@ public final class TcpSocketReceiver implements LogEnabled {
 			if (buffer.readableBytes() < 4) {
 				return;
 			}
-			buffer.markReaderIndex();
-			int length = buffer.readInt();
-			buffer.resetReaderIndex();
+			buffer.markReaderIndex();//标记读索引，标记读索引，标记之后resetReaderIndex重置的读索引值就是标记好的读索引值；
+			int length = buffer.readInt();//记录读取字节数
+			buffer.resetReaderIndex();//重置读索引值，如果没有mark标记，则重置为0，这里也就是上面mark的位置
 			if (buffer.readableBytes() < length + 4) {
 				return;
 			}
@@ -149,20 +154,20 @@ public final class TcpSocketReceiver implements LogEnabled {
 				if (length > 0) {
 					ByteBuf readBytes = buffer.readBytes(length + 4);
 
-					readBytes.markReaderIndex();
+					readBytes.markReaderIndex();//标记读索引
 					//readBytes.readInt();
-
+					//解码消息，解析成消息树
 					DefaultMessageTree tree = (DefaultMessageTree) CodecHandler.decode(readBytes);
 
 					// readBytes.retain();
-					readBytes.resetReaderIndex();
+					readBytes.resetReaderIndex();//重置读索引
 					tree.setBuffer(readBytes);
-					m_handler.handle(tree);
-					m_processCount++;
+					m_handler.handle(tree);//开始处理消息，交给消费者处理
+					m_processCount++;//统计已处理的消息数
 
 					long flag = m_processCount % CatConstants.SUCCESS_COUNT;
 
-					if (flag == 0) {
+					if (flag == 0) {//每1000条消息 统计下成功处理的消息总数
 						m_serverStateManager.addMessageTotal(CatConstants.SUCCESS_COUNT);
 					}
 				} else {
@@ -171,7 +176,7 @@ public final class TcpSocketReceiver implements LogEnabled {
 					BufReleaseHelper.release(buffer);
 				}
 			} catch (Exception e) {
-				m_serverStateManager.addMessageTotalLoss(1);
+				m_serverStateManager.addMessageTotalLoss(1);//统计数据丢弃的数量
 				m_logger.error(e.getMessage(), e);
 			}
 		}

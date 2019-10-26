@@ -42,7 +42,7 @@ public class ServersUpdaterManager implements Initializable {
 	private RemoteServersManager m_remoteServersManager;
 
 	@Override
-	public void initialize() throws InitializationException {
+	public void initialize() throws InitializationException {//创建一个定时任务
 		TimerSyncTask.getInstance().register(new SyncHandler() {
 
 			@Override
@@ -52,7 +52,7 @@ public class ServersUpdaterManager implements Initializable {
 
 			@Override
 			public void handle() throws Exception {
-				try {
+				try {//获得当前的小时时间
 					long currentHour = TimeHelper.getCurrentHour().getTime();
 					Map<String, Set<String>> currentServers = m_remoteServerUpdater.buildServers(new Date(currentHour));
 

@@ -39,10 +39,7 @@ import org.unidal.tuple.Pair;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -132,20 +129,31 @@ public class AlertManager implements Initializable {
 		return keys;
 	}
 
+	//List去重
+	private void removeDuplicate(List<String> list) {
+		LinkedHashSet<String> set = new LinkedHashSet<String>(list.size());
+		set.addAll(list);
+		list.clear();
+		list.addAll(set);
+	}
+
 	private boolean send(AlertEntity alert) {
 		boolean result = false;
-		String type = alert.getType().getName();
-		String group = alert.getGroup();
-		String level = alert.getLevel().getLevel();
-		String alertKey = alert.getKey();
+		String type = alert.getType().getName();//Transaction/event/error等
+		String group = alert.getGroup();//domain 也就是项目名称
+		String level = alert.getLevel().getLevel();//警告级别：error和warning
+		String alertKey = alert.getKey();//m_level + ":" + m_type + ":" + m_group + ":" + m_metric;
+        //获取通知类型：SMS/DX/SMS/WEIXIN
 		List<AlertChannel> channels = m_policyManager.queryChannels(type, group, level);
+		//获得level标签的suspendMinute值
 		int suspendMinute = m_policyManager.querySuspendMinute(type, group, level);
 
 		m_unrecoveredAlerts.put(alertKey, alert);
-
+        //获得通知的消息头和通知的消息内容
 		Pair<String, String> pair = m_decoratorManager.generateTitleAndContent(alert);
+		//获得通知的消息头
 		String title = pair.getKey();
-
+        //如果配置的suspendMinute>0
 		if (suspendMinute > 0) {
 			if (isSuspend(alertKey, suspendMinute)) {
 				return true;
@@ -155,10 +163,12 @@ public class AlertManager implements Initializable {
 		}
 
 		SendMessageEntity message = null;
-
+        //循环通知类型 SMS/DX/SMS/WEIXIN
 		for (AlertChannel channel : channels) {
 			String contactGroup = alert.getContactGroup();
 			List<String> receivers = m_contactorManager.queryReceivers(contactGroup, channel, type);
+			//去重
+			removeDuplicate(receivers);
 
 			if (receivers.size() > 0) {
 				String rawContent = pair.getValue();
@@ -198,6 +208,8 @@ public class AlertManager implements Initializable {
 			String title = "[告警恢复] [告警类型 " + alterType.getTitle() + "][" + group + " " + alert.getMetric() + "]";
 			String content = "[告警已恢复][恢复时间]" + currentMinute;
 			List<String> receivers = m_contactorManager.queryReceivers(alert.getContactGroup(), channel, type);
+			//去重
+			removeDuplicate(receivers);
 
 			if (receivers.size() > 0) {
 				SendMessageEntity message = new SendMessageEntity(group, title, type, content, receivers);
@@ -285,6 +297,10 @@ public class AlertManager implements Initializable {
 			while (true) {
 				try {
 					AlertEntity alert = m_alerts.poll(5, TimeUnit.MILLISECONDS);
+//					alert =new AlertEntity();
+//					alert.setDate(new Date()).setContent("test").setLevel("error");
+//					alert.setMetric("test-Event").setType(AlertType.Event.getName()).setGroup("testGroup");
+
 
 					if (alert != null) {
 						send(alert);

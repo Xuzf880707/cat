@@ -42,24 +42,25 @@ public class RealtimeConsumer extends ContainerHolder implements MessageConsumer
 	public static final long MINUTE = 60 * 1000L;
 
 	public static final long HOUR = 60 * MINUTE;
-
+	//Consumer主要是依赖MessageAnalyzerManager来管理AnalyzerManager对消息进行处理
 	@Inject
 	private MessageAnalyzerManager m_analyzerManager;
 
 	@Inject
 	private ServerStatisticManager m_serverStateManager;
-
+	//周期管理器
 	private PeriodManager m_periodManager;
 
 	private Logger m_logger;
 
 	@Override
 	public void consume(MessageTree tree) {
-		long timestamp = tree.getMessage().getTimestamp();
-		Period period = m_periodManager.findPeriod(timestamp);
+		long timestamp = tree.getMessage().getTimestamp();//获取消息的时间戳
+		//找到对应的周期(Period)，交给Period对消息进行分发
+		Period period = m_periodManager.findPeriod(timestamp);//查找消息的时间戳对应的周期批次
 
 		if (period != null) {
-			period.distribute(tree);
+			period.distribute(tree);//分发消息进行处理
 		} else {
 			m_serverStateManager.addNetworkTimeError(1);
 		}
@@ -131,9 +132,11 @@ public class RealtimeConsumer extends ContainerHolder implements MessageConsumer
 
 	@Override
 	public void initialize() throws InitializationException {
+		//创建一个周期管理器
+		//PeriodManager保留分析管理器指针仅仅用于在启动一个Period的时候，将MessageAnalyzerManager的指针传递给Period。
 		m_periodManager = new PeriodManager(HOUR, m_analyzerManager, m_serverStateManager, m_logger);
 		m_periodManager.init();
-
+		//开启一个周期管理线程
 		Threads.forGroup("cat").start(m_periodManager);
 	}
 

@@ -92,12 +92,13 @@ public class GlobalConfigProcessor {
 	public void process(Action action, Payload payload, Model model) {
 		switch (action) {
 		case PROJECT_ALL:
-			String domain = payload.getDomain();
+			String domain = payload.getDomain();//获得项目名称
 
-			if (StringUtils.isEmpty(domain)) {
+			if (StringUtils.isEmpty(domain)) {//默认是cat
 				domain = Constants.CAT;
 			}
 			model.setProjects(queryAllProjects());
+			//根据domain查找项目信息
 			model.setProject(m_projectService.findByDomain(domain));
 			break;
 		case PROJECT_ADD:
@@ -211,7 +212,7 @@ public class GlobalConfigProcessor {
 			break;
 		}
 	}
-
+	//从数据库中查找所有的项目
 	public List<Project> queryAllProjects() {
 		List<Project> projects = new ArrayList<Project>();
 

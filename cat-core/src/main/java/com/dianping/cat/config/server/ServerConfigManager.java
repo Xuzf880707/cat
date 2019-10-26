@@ -389,7 +389,7 @@ public class ServerConfigManager implements LogEnabled, Initializable {
 
 	@Override
 	public void initialize() throws InitializationException {
-		try {
+		try {//获取 config表的server-config
 			Config config = m_configDao.findByName(CONFIG_NAME, ConfigEntity.READSET_FULL);
 			String content = config.getContent();
 
@@ -448,7 +448,7 @@ public class ServerConfigManager implements LogEnabled, Initializable {
 			public String getName() {
 				return CONFIG_NAME;
 			}
-
+			//每隔1分钟更新一次
 			@Override
 			public void handle() throws Exception {
 				refreshConfig();
@@ -531,7 +531,7 @@ public class ServerConfigManager implements LogEnabled, Initializable {
 	}
 
 	private void prepare() {
-		if (isLocalMode()) {
+		if (isLocalMode()) {//如果是本地模式
 			m_logger.warn("CAT server is running in LOCAL mode! No HDFS or MySQL will be accessed!");
 		}
 		m_logger.info("CAT server is running with hdfs," + isHdfsOn());
@@ -548,7 +548,7 @@ public class ServerConfigManager implements LogEnabled, Initializable {
 			}
 		}
 	}
-
+	//定时更新server-config
 	private void refreshConfig() throws Exception {
 		Config config = m_configDao.findByName(CONFIG_NAME, ConfigEntity.READSET_FULL);
 		long modifyTime = config.getModifyDate().getTime();

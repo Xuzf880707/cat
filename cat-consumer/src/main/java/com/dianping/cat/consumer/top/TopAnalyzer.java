@@ -39,6 +39,16 @@ import com.dianping.cat.message.spi.MessageTree;
 import com.dianping.cat.report.DefaultReportManager.StoragePolicy;
 import com.dianping.cat.report.ReportManager;
 
+/***
+ * TopAnalyzer会处理指定Type类型的Event消息，具体有哪些类型会被处理会在 plexus/components-cat-consumer.xml 文件中配置：
+ * 			<role>com.dianping.cat.analysis.MessageAnalyzer</role>
+ * 			<role-hint>top</role-hint>
+ * 			<implementation>com.dianping.cat.consumer.top.TopAnalyzer</implementation>
+ * 			<instantiation-strategy>per-lookup</instantiation-strategy>
+ * 			<configuration>
+ * 				<errorType>Error,RuntimeException,Exception</errorType>
+ * 			</configuration>
+ */
 @Named(type = MessageAnalyzer.class, value = TopAnalyzer.ID, instantiationStrategy = Named.PER_LOOKUP)
 public class TopAnalyzer extends AbstractMessageAnalyzer<TopReport> implements LogEnabled {
 	public static final String ID = "top";
@@ -94,12 +104,13 @@ public class TopAnalyzer extends AbstractMessageAnalyzer<TopReport> implements L
 	@Override
 	public void process(MessageTree tree) {
 		String domain = tree.getDomain();
-
+		//检查domain是否有效
 		if (m_serverFilterConfigManager.validateDomain(domain)) {
+			//获得cat报表，跟domian无关
 			TopReport report = m_reportManager.getHourlyReport(getStartTime(), Constants.CAT, true);
-
+			//TopAnalyzer会处理指定Type类型的Event消息，具体有哪些类型会被处理会在 plexus/components-cat-consumer.xml 文件中配置
 			List<Event> events = tree.getEvents();
-
+			//轮询消息树中的events
 			for (Event e : events) {
 				processEvent(report, tree, e);
 			}
@@ -110,14 +121,17 @@ public class TopAnalyzer extends AbstractMessageAnalyzer<TopReport> implements L
 		String type = event.getType();
 
 		if (m_errorTypes.contains(type)) {
-			String domain = tree.getDomain();
-			String ip = tree.getIpAddress();
-			String exception = event.getName();
+			String domain = tree.getDomain();//获得消息树所属的实际项目名称
+			String ip = tree.getIpAddress();//客户端ip
+			String exception = event.getName();//event Name
 			long current = event.getTimestamp() / 1000 / 60;
 			int min = (int) (current % (60));
+			//统计当前小时周期内上面类型消息的3个计数：Error,RuntimeException,Exception
+			//当前小时周期内每分钟，每个domain，也就是每个project的错误计数
 			Segment segment = report.findOrCreateDomain(domain).findOrCreateSegment(min).incError();
-
+			//每个domain名字对应的错误计数
 			segment.findOrCreateError(exception).incCount();
+			//每个IP对应的错误计数
 			segment.findOrCreateMachine(ip).incCount();
 		}
 	}

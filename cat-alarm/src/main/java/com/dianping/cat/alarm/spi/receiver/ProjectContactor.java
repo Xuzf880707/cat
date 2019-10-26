@@ -48,6 +48,7 @@ public abstract class ProjectContactor extends DefaultContactor implements Conta
 			mailReceivers.addAll(buildDefaultMailReceivers(receiver));
 
 			if (StringUtils.isNotEmpty(id)) {
+			    //根据项目名称domain查询project表,获得项目的通知人员信息
 				Project project = m_projectService.findByDomain(id);
 
 				if (project != null) {
@@ -120,5 +121,28 @@ public abstract class ProjectContactor extends DefaultContactor implements Conta
 			return receivers;
 		}
 	}
+
+
+    @Override
+    public List<String> queryDingdingContactors(String id) {
+        List<String> dingdingReceivers = new ArrayList<String>();
+        Receiver receiver = m_configManager.queryReceiverById(getId());
+
+        if (receiver != null && !receiver.isEnable()) {
+            return dingdingReceivers;
+        } else {
+            dingdingReceivers.addAll(buildDefaultDingdingReceivers(receiver));
+
+            if (StringUtils.isNotEmpty(id)) {
+                //根据项目名称domain查询project表,获得项目的通知人员信息
+                Project project = m_projectService.findByDomain(id);
+
+                if (project != null) {
+                    dingdingReceivers.addAll(split(project.getEmail()));
+                }
+            }
+            return dingdingReceivers;
+        }
+    }
 
 }

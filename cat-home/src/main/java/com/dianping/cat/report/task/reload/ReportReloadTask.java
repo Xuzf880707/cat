@@ -56,12 +56,12 @@ public class ReportReloadTask extends ContainerHolder implements Initializable, 
 
 	@Override
 	public void run() {
-		boolean active = TimeHelper.sleepToNextMinute();
+		boolean active = TimeHelper.sleepToNextMinute();//每隔一分钟，生成一个报表
 
 		while (active) {
-			long current = System.currentTimeMillis();
+			long current = System.currentTimeMillis();//获得当前时间
 
-			try {
+			try {//
 				for (Entry<String, ReportReloader> entry : m_reloaders.entrySet()) {
 					String type = entry.getKey();
 					List<Date> dates = m_configManager.queryByReportType(type);

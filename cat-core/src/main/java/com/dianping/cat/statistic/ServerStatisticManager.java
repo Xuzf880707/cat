@@ -60,6 +60,7 @@ public class ServerStatisticManager {
 	}
 
 	public void addMessageTotal(String domain, long total) {
+		//每分钟统计一次
 		getCurrentStatistic().addMessageTotal(domain, total);
 	}
 
@@ -86,7 +87,7 @@ public class ServerStatisticManager {
 	public Statistic findOrCreateState(long time) {
 		return m_serverState.findOrCreate(time);
 	}
-
+	//默认每分钟统计一次
 	private Statistic getCurrentStatistic() {
 		long time = System.currentTimeMillis();
 

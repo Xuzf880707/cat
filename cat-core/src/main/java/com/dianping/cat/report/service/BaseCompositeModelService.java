@@ -110,7 +110,7 @@ public abstract class BaseCompositeModelService<T> extends ModelServiceWithCalSu
 			if (!service.isEligable(request)) {
 				continue;
 			}
-
+			//保存当前事务，这样子线程可以访问
 			// save current transaction so that child thread can access it
 			if (service instanceof ModelServiceWithCalSupport) {
 				((ModelServiceWithCalSupport) service).setParentTransaction(t);

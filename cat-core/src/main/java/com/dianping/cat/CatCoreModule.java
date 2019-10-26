@@ -31,7 +31,7 @@ public class CatCoreModule extends AbstractModule {
 
 	@Override
 	protected void execute(final ModuleContext ctx) throws Exception {
-		// bring up ServersUpdaterManager
+		// bring up ServersUpdaterManager  开始查找启动ServersUpdaterManager
 		ctx.lookup(ServersUpdaterManager.class);
 	}
 

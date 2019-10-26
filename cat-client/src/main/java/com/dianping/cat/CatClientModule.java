@@ -43,22 +43,23 @@ public class CatClientModule extends AbstractModule {
 	protected void execute(final ModuleContext ctx) throws Exception {
 		ctx.info("Current working directory is " + System.getProperty("user.dir"));
 
-		// initialize milli-second resolution level timer
+		// initialize milli-second resolution level timer 初始化系统时间
 		MilliSecondTimer.initialize();
 
 		// tracking thread start/stop
 		Threads.addListener(new CatThreadListener(ctx));
-
+		//查找ClientConfigManager实现类：DefaultClientConfigManager
 		ClientConfigManager clientConfigManager = ctx.lookup(ClientConfigManager.class);
 
-		// warm up Cat
+		// warm up Cat Cat预热
 		Cat.getInstance().setContainer(((DefaultModuleContext) ctx).getContainer());
 
-		// bring up TransportManager
+		// bring up TransportManager 查找TransportManager实现类DefaultTransportManager
 		ctx.lookup(TransportManager.class);
 
 		if (clientConfigManager.isCatEnabled()) {
 			// start status update task
+			//
 			StatusUpdateTask statusUpdateTask = ctx.lookup(StatusUpdateTask.class);
 			Threads.forGroup("cat").start(statusUpdateTask);
 

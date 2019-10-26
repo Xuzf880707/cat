@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.dianping.cat</groupId>
 	<artifactId>parent</artifactId>
-	<version>3.0.0</version>
+	<version>3.0.0-SNAPSHOT</version>
 	<name>parent</name>
 	<description>Central Application Tracking</description>
 	<packaging>pom</packaging>
@@ -51,7 +51,7 @@
 			<dependency>
 				<groupId>org.unidal.framework</groupId>
 				<artifactId>foundation-service</artifactId>
-				<version>2.5.0</version>
+				<version>2.5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>org.unidal.framework</groupId>
@@ -290,4 +290,15 @@ org.eclipse.jdt.core.compiler.compliance=1.7
 	<properties>
 		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
     </properties>
+	<distributionManagement>
+		<snapshotRepository>
+			<id>archjava</id>
+			<url>http://maven.cheyaoshicorp.com/nexus/content/repositories/carkey-archjava-snapshots/</url>
+		</snapshotRepository>
+		<repository>
+			<id>archjava</id>
+			<url>http://maven.cheyaoshicorp.com/nexus/content/repositories/carkey-archjava-release/</url>
+		</repository>
+	</distributionManagement>
+
 </project>

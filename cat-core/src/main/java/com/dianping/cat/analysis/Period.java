@@ -53,7 +53,7 @@ public class Period {
 
 	@Inject
 	private Logger m_logger;
-
+	//每个周期都会为每一种分析器
 	public Period(long startTime, long endTime, MessageAnalyzerManager analyzerManager,
 							ServerStatisticManager serverStateManager, Logger logger) {
 		m_startTime = startTime;
@@ -61,19 +61,24 @@ public class Period {
 		m_analyzerManager = analyzerManager;
 		m_serverStateManager = serverStateManager;
 		m_logger = logger;
-
+		//获取所有分析器名字，可以说每个名字对应一类分析器
 		List<String> names = m_analyzerManager.getAnalyzerNames();
-
+		//遍历所有的分析器(大概有12个)，并为每个分析器创建一个PeriodTask列表，每个PeriodTask都会绑定一个MessageAnalyzer分析器对象
 		m_tasks = new HashMap<String, List<PeriodTask>>();
 		for (String name : names) {
+			//根据分析器名字和周期时间，获取当前周期、该类别分析器所有实例
+			//同一个周期内，一个分析器名称可以对应多个分析器
 			List<MessageAnalyzer> messageAnalyzers = m_analyzerManager.getAnalyzer(name, startTime);
-
+			//为每个MessageAnalyzer分配一个PeriodTask，每个PeriodTask
 			for (MessageAnalyzer analyzer : messageAnalyzers) {
+				//为每个分析器都创建一个 PeriodTask，并为每一个PeriodTask创建任务队列。
+				//客户端消息过来，会由Period分发给所有类别的PeriodTask
 				MessageQueue queue = new DefaultMessageQueue(QUEUE_SIZE);
 				PeriodTask task = new PeriodTask(analyzer, queue, startTime);
 
 				task.enableLogging(m_logger);
-
+				//同一类分析器下有多个分析器(MessageAnalyzer)的时候，只有一个MessageAnalyzer会被分发，采用domain hash选出这个实例，
+				// 在这里，分发实际上就是插入PeriodTask的任务队列，最后将创建PeriodTask加入m_tasks
 				List<PeriodTask> analyzerTasks = m_tasks.get(name);
 
 				if (analyzerTasks == null) {
@@ -85,11 +90,16 @@ public class Period {
 		}
 	}
 
+	/***
+	 * 每一笔消息默认都会发送到所有种类分析器处理，但是同一种类别的分析器下如果有多个MessageAnalyzer实例，
+	 * 		采用domain hash 选出其中一个实例安排处理消息
+	 * @param tree
+	 */
 	public void distribute(MessageTree tree) {
-		m_serverStateManager.addMessageTotal(tree.getDomain(), 1);
+		m_serverStateManager.addMessageTotal(tree.getDomain(), 1);//统计项目对应的消息数
 		boolean success = true;
-		String domain = tree.getDomain();
-
+		String domain = tree.getDomain();//获得项目
+		//遍历所有的key-value，key是分析器名称，value是一个PeriodTask列表
 		for (Entry<String, List<PeriodTask>> entry : m_tasks.entrySet()) {
 			List<PeriodTask> tasks = entry.getValue();
 			int length = tasks.size();
@@ -176,7 +186,7 @@ public class Period {
 	public boolean isIn(long timestamp) {
 		return timestamp >= m_startTime && timestamp < m_endTime;
 	}
-
+	//启动所有的periodTask
 	public void start() {
 		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -190,7 +200,7 @@ public class Period {
 				PeriodTask task = taskList.get(i);
 
 				task.setIndex(i);
-
+				//启动task的run方法
 				Threads.forGroup("Cat-RealtimeConsumer").start(task);
 			}
 		}

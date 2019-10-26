@@ -4,12 +4,14 @@
 	<parent>
 		<groupId>com.dianping.cat</groupId>
 		<artifactId>parent</artifactId>
-		<version>3.0.0</version>
-	</parent>
+		<version>3.0.0-SNAPSHOT</version>
+        <!--<relativePath/>-->
+    </parent>
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>cat-client</artifactId>
 	<name>cat-client</name>
 	<packaging>jar</packaging>
+	<version>3.0.1-SNAPSHOT</version>
 	<dependencies>
 		<dependency>
 			<groupId>org.unidal.framework</groupId>
@@ -84,5 +86,16 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<distributionManagement>
+		<snapshotRepository>
+			<id>archjava</id>
+			<url>http://maven.cheyaoshicorp.com/nexus/content/repositories/carkey-archjava-snapshots/</url>
+		</snapshotRepository>
+		<repository>
+			<id>archjava</id>
+			<url>http://maven.cheyaoshicorp.com/nexus/content/repositories/carkey-archjava-release/</url>
+		</repository>
+	</distributionManagement>
 </project>
 

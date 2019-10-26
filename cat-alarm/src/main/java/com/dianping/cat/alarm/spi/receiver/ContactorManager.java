@@ -37,7 +37,7 @@ public class ContactorManager extends ContainerHolder implements Initializable {
 	public void initialize() throws InitializationException {
 		m_contactors = lookupMap(Contactor.class);
 	}
-
+    //根据 group 、通知类型、事件类型
 	public List<String> queryReceivers(String group, AlertChannel channel, String type) {
 		Contactor contactor = m_contactors.get(type);
 
@@ -49,7 +49,9 @@ public class ContactorManager extends ContainerHolder implements Initializable {
 			return contactor.queryWeiXinContactors(group);
 		} else if (AlertChannel.DX == channel) {
 			return contactor.queryDXContactors(group);
-		} else {
+		}else if (AlertChannel.DINGDING == channel) {
+            return contactor.queryDingdingContactors(group);
+        } else {
 			throw new RuntimeException("unsupported channel");
 		}
 	}

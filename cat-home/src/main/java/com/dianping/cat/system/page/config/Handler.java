@@ -83,7 +83,7 @@ public class Handler implements PageHandler<Context> {
 	public void handleInbound(Context ctx) throws ServletException, IOException {
 		// display only, no action here
 	}
-
+	//进入配置页面
 	@Override
 	@PreInboundActionMeta("login")
 	@OutboundActionMeta(name = "config")

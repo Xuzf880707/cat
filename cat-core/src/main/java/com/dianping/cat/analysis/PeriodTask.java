@@ -60,6 +60,11 @@ public class PeriodTask implements Task, LogEnabled {
 		m_logger = logger;
 	}
 
+	/***
+	 * 消费者会把对应的消息树分发给这些PeriodTask对列中
+	 * @param tree
+	 * @return
+	 */
 	public boolean enqueue(MessageTree tree) {
 		if (m_analyzer.isEligable(tree)) {
 			boolean result = m_queue.offer(tree);
@@ -102,9 +107,13 @@ public class PeriodTask implements Task, LogEnabled {
 		return m_analyzer.getClass().getSimpleName() + "-" + cal.get(Calendar.HOUR_OF_DAY) + "-" + m_index;
 	}
 
+	/***
+	 * 分析器定时从这个PeriodTask队列中消费消息树，并交给对应的消息分析器处理
+	 */
 	@Override
 	public void run() {
 		try {
+			//就是调用分析器的分析函数analyze(m_queue)，并传入任务队列 m_queue
 			m_analyzer.analyze(m_queue);
 		} catch (Exception e) {
 			Cat.logError(e);

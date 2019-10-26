@@ -73,9 +73,9 @@
 					<button class="btn btn-inverse btn-sm" id="nav_config">
 						<i class="ace-icon fa fa-cogs"></i>Configs
 					</button>
-					<button class="btn btn-yellow btn-sm" id="nav_document">
-						<i class="ace-icon fa fa-cogs"></i>Documents
-					</button>
+					<%--<button class="btn btn-yellow btn-sm" id="nav_document">--%>
+						<%--<i class="ace-icon fa fa-cogs"></i>Documents--%>
+					<%--</button>--%>
 					</i>
 				</div>
 				<!-- #section:basics/navbar.dropdown -->
@@ -94,12 +94,12 @@
 							</span>
 <!-- 							<i class="ace-icon fa fa-caret-down"></i>
  -->						</a>
-						<%-- <ul class="user-menu dropdown-menu-right dropdown-menu dropdown-yellow dropdown-caret dropdown-close">
+						<ul class="user-menu dropdown-menu-right dropdown-menu dropdown-yellow dropdown-caret dropdown-close">
 							<li>
 								<a href="/cat/s/login?op=logout" ><i class="ace-icon fa fa-power-off"></i>
 								注销</a>
 							</li>
-						</ul> --%>
+						</ul>
 					</li>
 				</ul>
 				</div> 

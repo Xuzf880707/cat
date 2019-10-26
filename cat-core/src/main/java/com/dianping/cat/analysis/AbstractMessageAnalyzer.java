@@ -52,7 +52,7 @@ public abstract class AbstractMessageAnalyzer<R> extends ContainerHolder impleme
 	private long m_errors = 0;
 
 	private AtomicBoolean m_active = new AtomicBoolean(true);
-
+	//分析程序轮训从队列中取出消息，然后调用process处理，具体的处理逻辑就是由process完成的，process是一个抽象函数
 	@Override
 	public void analyze(MessageQueue queue) {
 		while (!isTimeout() && isActive()) {
@@ -60,7 +60,7 @@ public abstract class AbstractMessageAnalyzer<R> extends ContainerHolder impleme
 
 			if (tree != null) {
 				try {
-					process(tree);
+					process(tree);//处理消息，交给实际的分析器处理了
 				} catch (Throwable e) {
 					m_errors++;
 

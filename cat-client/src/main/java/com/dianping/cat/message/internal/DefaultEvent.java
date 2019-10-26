@@ -39,6 +39,7 @@ public class DefaultEvent extends AbstractMessage implements Event {
 		setCompleted(true);
 
 		if (m_manager != null) {
+			//将Event对象加入到Context的消息树MessageTree
 			m_manager.add(this);
 		}
 	}

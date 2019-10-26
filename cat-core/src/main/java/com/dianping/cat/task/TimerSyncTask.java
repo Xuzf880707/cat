@@ -93,7 +93,7 @@ public class TimerSyncTask implements Task {
 
 			long duration = System.currentTimeMillis() - current;
 
-			try {
+			try {//每隔1分钟更新一次
 				if (duration < DURATION) {
 					Thread.sleep(DURATION - duration);
 				}

@@ -145,6 +145,10 @@ public class DefaultClientConfigManager implements LogEnabled, ClientConfigManag
 		return 1024;
 	}
 
+	/***
+	 * 加载读取client.xml文件
+	 * @throws InitializationException
+	 */
 	@Override
 	public void initialize() throws InitializationException {
 		String xml = Cat.getCatHome() + "client.xml";
@@ -154,12 +158,17 @@ public class DefaultClientConfigManager implements LogEnabled, ClientConfigManag
 		initialize(configFile);
 	}
 
+	/***
+	 * 读取并加载client.xml配置文件
+	 * @param configFile
+	 * @throws InitializationException
+	 */
 	@Override
 	public void initialize(File configFile) throws InitializationException {
 		try {
 			ClientConfig globalConfig = null;
 			ClientConfig warConfig = null;
-
+			//读取 client.xml配置文件
 			if (configFile != null) {
 				if (configFile.exists()) {
 					String xml = Files.forIO().readFrom(configFile.getCanonicalFile(), "utf-8");
@@ -172,9 +181,11 @@ public class DefaultClientConfigManager implements LogEnabled, ClientConfigManag
 			}
 
 			// load the client configure from Java class-path
+			//读取META-INF/app.properties 并获得app.name
 			warConfig = loadConfigFromEnviroment();
 
 			// merge the two configures together to make it effected
+			//如果 client.xml配置和app.name都配置了
 			if (globalConfig != null && warConfig != null) {
 				globalConfig.accept(new ClientConfigMerger(warConfig));
 			}
@@ -218,6 +229,7 @@ public class DefaultClientConfigManager implements LogEnabled, ClientConfigManag
 	}
 
 	private ClientConfig loadConfigFromEnviroment() {
+		//加载 /META-INF/app.properties 并读取app.name的配置
 		String appName = loadProjectName();
 
 		if (appName != null) {
@@ -233,6 +245,7 @@ public class DefaultClientConfigManager implements LogEnabled, ClientConfigManag
 		String appName = null;
 		InputStream in = null;
 		try {
+			//加载 /META-INF/app.properties 配置文件
 			in = Thread.currentThread().getContextClassLoader().getResourceAsStream(PROPERTIES_FILE);
 
 			if (in == null) {
@@ -242,7 +255,7 @@ public class DefaultClientConfigManager implements LogEnabled, ClientConfigManag
 				Properties prop = new Properties();
 
 				prop.load(in);
-
+				//获得
 				appName = prop.getProperty("app.name");
 				if (appName != null) {
 					m_logger.info(String.format("Find domain name %s from app.properties.", appName));
@@ -267,6 +280,7 @@ public class DefaultClientConfigManager implements LogEnabled, ClientConfigManag
 	}
 
 	public void refreshConfig() {
+		//获得服务端配置 server-config
 		String url = getServerConfigUrl();
 
 		try {

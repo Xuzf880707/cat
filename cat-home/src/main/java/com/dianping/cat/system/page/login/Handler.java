@@ -60,7 +60,7 @@ public class Handler implements PageHandler<Context> {
 	public void handleInbound(Context ctx) throws ServletException, IOException {
 		Payload payload = ctx.getPayload();
 		Action action = payload.getAction();
-
+		//如果是登陆的话，进行用户登陆
 		if (payload.isSubmit() && action == Action.LOGIN) {
 			String account = payload.getAccount();
 			String password = payload.getPassword();

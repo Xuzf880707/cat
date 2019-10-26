@@ -95,14 +95,26 @@ public class DefaultMessageProducer implements MessageProducer {
 		logError(null, cause);
 	}
 
+	/***
+	 *
+	 * @param type event type
+	 * @param name event name
+	 */
 	@Override
 	public void logEvent(String type, String name) {
 		logEvent(type, name, Message.SUCCESS, null);
 	}
 
+	/***
+	 *
+	 * @param type           event type
+	 * @param name           event name
+	 * @param status         "0" means success, otherwise means error code
+	 * @param nameValuePairs name value pairs in the format of "a=1&b=2&..."
+	 */
 	@Override
 	public void logEvent(String type, String name, String status, String nameValuePairs) {
-		Event event = newEvent(type, name);
+		Event event = newEvent(type, name);//创建一个Event对象
 
 		if (nameValuePairs != null && nameValuePairs.length() > 0) {
 			event.addData(nameValuePairs);
@@ -121,11 +133,17 @@ public class DefaultMessageProducer implements MessageProducer {
 		heartbeat.complete();
 	}
 
+	/***
+	 *
+	 * @param name           metric name
+	 * @param status         "0" means success, otherwise means error code
+	 * @param nameValuePairs name value pairs in the format of "a=1&b=2&..."
+	 */
 	@Override
 	public void logMetric(String name, String status, String nameValuePairs) {
 		String type = "";
 		Metric metric = newMetric(type, name);
-
+		//开始
 		if (nameValuePairs != null && nameValuePairs.length() > 0) {
 			metric.addData(nameValuePairs);
 		}
@@ -246,9 +264,19 @@ public class DefaultMessageProducer implements MessageProducer {
 		return new DefaultTrace(type, name, m_manager);
 	}
 
+	/**
+	 * 创建一个事务，
+	 * 		1.先获取上下文如果没有则新建;
+	 * 		2. 如果可以记录消息，则立马创建一个默认事务DefaultTransaction;
+	 * 		3. 开启执行，返回事务实例，供下文调用;
+	 * @param type transaction type
+	 * @param name transaction name
+	 * @return
+	 */
 	@Override
 	public Transaction newTransaction(String type, String name) {
 		// this enable CAT client logging cat message without explicit setup
+		//从线程ThreadLocal判断是否存在消息的上下文，如果不存在的话，新建一个并存放到ThreadLocal
 		if (!m_manager.hasContext()) {
 			m_manager.setup();
 		}

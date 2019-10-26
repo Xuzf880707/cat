@@ -41,6 +41,10 @@ import com.dianping.cat.core.config.ConfigEntity;
 import com.dianping.cat.task.TimerSyncTask;
 import com.dianping.cat.task.TimerSyncTask.SyncHandler;
 
+/**
+ * CAT配置管理类
+ * 配置在数据库或者配置文件中都是以xml格式存储
+ */
 @Named(type = ServerFilterConfigManager.class)
 public class ServerFilterConfigManager implements Initializable {
 
@@ -99,17 +103,27 @@ public class ServerFilterConfigManager implements Initializable {
 		return unusedDomains;
 	}
 
+	/**
+	 * 在ServerFilterConfigManager被plexus容器实例化之后，就会调用initialize()做一些初始化的工作
+	 * @throws InitializationException
+	 */
 	@Override
 	public void initialize() throws InitializationException {
 		try {
+			//读取cat数据库的config表，如果根据配置名 CONFIG_NAME 找到相关的配置信息
 			Config config = m_configDao.findByName(CONFIG_NAME, ConfigEntity.READSET_FULL);
 			String content = config.getContent();
 
 			m_configId = config.getId();
 			m_modifyTime = config.getModifyDate().getTime();
+			//如果 config 表中存在配置信息，则通过 DefaultSaxParser.parse(content) 方法解析xml配置信息，
+			// 并将解析后的配置信息写入实体对象ServerFilterConfig m_config，
 			m_config = DefaultSaxParser.parse(content);
 		} catch (DalNotFoundException e) {
 			try {
+				//如果 config 表中不存在配置信息，就会去读取默认 xml 文件,解析后写入到数据库和实体对象.
+				//下次再初始化的时候就是直接从数据库读取了，xml一般存在于cat-core/src/main/resources/config/
+				// 和 cat-home/src/main/resources/config/
 				String content = m_fetcher.getConfigContent(CONFIG_NAME);
 				Config config = m_configDao.createLocal();
 

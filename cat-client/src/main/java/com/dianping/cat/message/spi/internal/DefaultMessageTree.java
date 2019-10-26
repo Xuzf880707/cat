@@ -37,19 +37,20 @@ import com.dianping.cat.message.spi.codec.PlainTextMessageCodec;
 public class DefaultMessageTree implements MessageTree {
 
 	private ByteBuf m_buf;
-
+	//一个domain可以对应成一个project
 	private String m_domain;
 
 	private String m_hostName;
 
 	private String m_ipAddress;
-
+	//消息树下挂的一般是Transaction消息，也可以是别的
 	private Message m_message;
-
+	//每个消息树拥有一个唯一的MessageId
 	private String m_messageId;
-
+	//不同的消息树(比如微服务中A服务调用B服务，A，B都会生成消息树) 通过 parenMessageId、rootMessageId 串联起来
+	//当前消息树的父节点，关联到别的消息树上
 	private String m_parentMessageId;
-
+	//由root串起一个完整的消息事务
 	private String m_rootMessageId;
 
 	private String m_sessionToken;

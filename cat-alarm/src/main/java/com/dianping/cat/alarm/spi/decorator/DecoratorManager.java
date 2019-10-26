@@ -36,7 +36,7 @@ public class DecoratorManager extends ContainerHolder implements Initializable {
 	private Map<String, Decorator> m_decorators = new HashMap<String, Decorator>();
 
 	public Pair<String, String> generateTitleAndContent(AlertEntity alert) {
-		AlertType alertType = alert.getType();
+		AlertType alertType = alert.getType();//Transaction/Event/Exception/Business/Heartbeat
 		Decorator decorator = m_decorators.get(alertType.getName());
 
 		if (decorator != null) {

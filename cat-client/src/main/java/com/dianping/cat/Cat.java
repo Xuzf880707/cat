@@ -103,6 +103,11 @@ public class Cat {
 		}
 	}
 
+	/***
+	 * 获得配置文件，
+	 * 		优先检查环境变量是否配置了CAT_HOME，如果未配置的话，则获取服务器上/data/appdatas/cat/
+	 * @return
+	 */
 	public static String getCatHome() {
 		String catHome = CatPropertyProvider.INST.getProperty("CAT_HOME", CatConstants.CAT_HOME_DEFAULT_DIR);
 		if (!catHome.endsWith("/")) {
@@ -175,6 +180,7 @@ public class Cat {
 			if (!s_init) {
 				synchronized (s_instance) {
 					if (!s_init) {
+						//获得默认的容器
 						PlexusContainer container = ContainerLoader.getDefaultContainer();
 						ModuleContext ctx = new DefaultModuleContext(container);
 						Module module = ctx.lookup(Module.class, CatClientModule.ID);
@@ -369,6 +375,12 @@ public class Cat {
 		logMetricInternal(name, "S,C", String.format("%s,%.2f", quantity, sum));
 	}
 
+	/**
+	 *
+	 * @param name event名称
+	 * @param status 默认是"C表示计算总数的
+	 * @param keyValuePairs name对应的叠加值
+	 */
 	private static void logMetricInternal(String name, String status, String keyValuePairs) {
 		try {
 			Cat.getProducer().logMetric(name, status, keyValuePairs);

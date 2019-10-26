@@ -128,7 +128,7 @@ public class DefaultMessageManager extends ContainerHolder implements MessageMan
 		MessageSender sender = m_transportManager.getSender();
 
 		if (sender != null && isMessageEnabled()) {
-			sender.send(tree);
+			sender.send(tree);//send函数也不是立即发送， 仅仅只是插入内存队列
 
 			if (clearContext) {
 				reset();
@@ -319,6 +319,9 @@ public class DefaultMessageManager extends ContainerHolder implements MessageMan
 		}
 	}
 
+	/**
+	 * 如何获取当前上下文
+	 */
 	@Override
 	public void setup() {
 		Context ctx;
@@ -363,10 +366,10 @@ public class DefaultMessageManager extends ContainerHolder implements MessageMan
 			m_logger.warn("CAT client is not enabled because it's not initialized yet");
 		}
 	}
-
+	//由于Context是线程本地变量，由此可以推断，每个线程都拥有各自的消息树和事务栈
 	class Context {
 		private MessageTree m_tree;
-
+		//存放当前Context存在的Transaction，不存放其它的比如Event等
 		private Stack<Transaction> m_stack;
 
 		private int m_length;
@@ -396,30 +399,42 @@ public class DefaultMessageManager extends ContainerHolder implements MessageMan
 		}
 
 		public void add(Message message) {
+			//如果是空的说明这个消息是一个单独的非事务类型消息，那么它会直接将消息发送出去，并清除Context
 			if (m_stack.isEmpty()) {
 				MessageTree tree = m_tree.copy();
 
 				tree.setMessage(message);
 				flush(tree, true);
-			} else {
+			} else {//如果m_stack 不为空，说明这个event消息处在一个事务下面，
+				// 我们从m_stack 栈顶获取事务，将event消息嵌套到事务里，等待事务结束的时候一同推送到服务器
 				Transaction parent = m_stack.peek();
 
 				addTransactionChild(message, parent);
 			}
 		}
 
+		/**
+		 * 将transaction加入为parent的子节点
+		 * @param message
+		 * @param transaction
+		 */
 		private void addTransactionChild(Message message, Transaction transaction) {
+			//计算时间 或 长度条件，
 			long treePeriod = trimToHour(m_tree.getMessage().getTimestamp());
 			long messagePeriod = trimToHour(message.getTimestamp() - 10 * 1000L); // 10 seconds extra time allowed
-
+			//如果不在统一小事内,则需要先将之前的消息发送到Server，就发送到Server里（truncateAndFlush） 
 			if (treePeriod < messagePeriod || m_length >= ApplicationSettings.getTreeLengthLimit()) {
 				m_validator.truncateAndFlush(this, message.getTimestamp());
 			}
-
+			//将当前 transaction 加到 m_stack 栈顶元素的子消息中去。
 			transaction.addChild(message);
 			m_length++;
 		}
 
+		/**
+		 * 适应事务时间段
+		 * @param root
+		 */
 		private void adjustForTruncatedTransaction(Transaction root) {
 			DefaultEvent next = new DefaultEvent("TruncatedTransaction", "TotalDuration");
 			long actualDurationInMicros = m_totalDurationInMicros + root.getDurationInMicros();
@@ -441,7 +456,8 @@ public class DefaultMessageManager extends ContainerHolder implements MessageMan
 		public boolean end(DefaultMessageManager manager, Transaction transaction) {
 			if (!m_stack.isEmpty()) {
 				Transaction current = m_stack.pop();
-
+				//如果弹出的事务不等于end方法传入的事务，则认为弹出的事务不是我们需要结束的事务，而是被嵌套的子事务，
+				// 我们继续弹出下一个栈顶元素，即父事务，直到弹出我们需要结束的事务为止。在这个过程，会调用validate对事务进行校验。
 				if (transaction == current) {
 					m_validator.validate(m_stack.isEmpty() ? null : m_stack.peek(), current);
 				} else {
@@ -451,7 +467,7 @@ public class DefaultMessageManager extends ContainerHolder implements MessageMan
 						current = m_stack.pop();
 					}
 				}
-
+				//然后我们判断栈是否为空，如果为空，则认为end传入的事务为根事务，这个时候我们才调用 m_manager.flush 将消息树上报到服务器。
 				if (m_stack.isEmpty()) {
 					MessageTree tree = m_tree.copy();
 
@@ -513,11 +529,11 @@ public class DefaultMessageManager extends ContainerHolder implements MessageMan
 					Transaction parent = m_stack.peek();
 					addTransactionChild(transaction, parent);
 				}
-			} else {
+			} else {//就把当前这个Transaction加到MessageTree里面
 				m_tree.setMessage(transaction);
 			}
 
-			if (!forked) {
+			if (!forked) {//判断 transaction 是否是forked的事务，不是则将transaction加入 m_stack
 				m_stack.push(transaction);
 			}
 		}

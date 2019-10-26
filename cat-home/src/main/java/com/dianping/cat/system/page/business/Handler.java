@@ -79,7 +79,7 @@ public class Handler implements PageHandler<Context> {
 	public void handleInbound(Context ctx) throws ServletException, IOException {
 		// display only, no action here
 	}
-
+	//查询 应用监控配置
 	@Override
 	@PreInboundActionMeta("login")
 	@OutboundActionMeta(name = "business")
@@ -90,11 +90,11 @@ public class Handler implements PageHandler<Context> {
 		String domain = payload.getDomain();
 
 		model.setPage(SystemPage.BUSINESS);
-		model.setAction(action);
-		model.setDomains(m_projectService.findAllDomains());
+		model.setAction(action); //list
+		model.setDomains(m_projectService.findAllDomains());//查询所有的domain
 
 		switch (action) {
-		case LIST:
+		case LIST: //list
 			listConfigs(domain, model);
 			break;
 		case ADD:
@@ -187,7 +187,13 @@ public class Handler implements PageHandler<Context> {
 		model.setContent(content);
 	}
 
+	/***
+	 * 根据domain查询所有的业务监控配置
+	 * @param domain 项目名称
+	 * @param model
+	 */
 	private void listConfigs(String domain, Model model) {
+		//根据domain查询项目的业务监控配置
 		BusinessReportConfig config = m_configManager.queryConfigByDomain(domain);
 		Map<String, Set<String>> tags = m_tagConfigManger.findTagByDomain(domain);
 		List<BusinessItemConfig> configs = new ArrayList<BusinessItemConfig>(config.getBusinessItemConfigs().values());

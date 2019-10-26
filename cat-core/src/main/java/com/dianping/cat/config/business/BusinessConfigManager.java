@@ -155,6 +155,11 @@ public class BusinessConfigManager extends ContainerHolder implements Initializa
 		}
 	}
 
+	/***
+	 * 如果是告警机器，则缓存domain的监控配置
+	 * @param businessReportConfig
+	 * @param domain
+	 */
 	private void cacheConfigs(BusinessReportConfig businessReportConfig, String domain) {
 		if (m_alertMachine) {
 			m_configs.put(domain, businessReportConfig);

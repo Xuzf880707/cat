@@ -36,19 +36,19 @@ import com.dianping.cat.report.task.reload.ReportReloadTask;
 @Named(type = Module.class, value = CatHomeModule.ID)
 public class CatHomeModule extends AbstractModule {
 	public static final String ID = "cat-home";
-
+	//启动了一大堆的定时任务
 	@Override
-	protected void execute(ModuleContext ctx) throws Exception {
+	protected void execute(ModuleContext ctx) throws Exception {//开始加载并执行CatHomeModule模块
 		ServerConfigManager serverConfigManager = ctx.lookup(ServerConfigManager.class);
 		ReportReloadTask reportReloadTask = ctx.lookup(ReportReloadTask.class);
 
 		Threads.forGroup("cat").start(reportReloadTask);
-
+		//实例化RealtimeConsumer，用于消费client发来的消息
 		ctx.lookup(MessageConsumer.class);
 
 		if (serverConfigManager.isJobMachine()) {
 			DefaultTaskConsumer taskConsumer = ctx.lookup(DefaultTaskConsumer.class);
-
+			//启动一个消费者任务
 			Threads.forGroup("cat").start(taskConsumer);
 		}
 
@@ -75,8 +75,8 @@ public class CatHomeModule extends AbstractModule {
 
 	@Override
 	protected void setup(ModuleContext ctx) throws Exception {
-		final TcpSocketReceiver messageReceiver = ctx.lookup(TcpSocketReceiver.class);
-
+		final TcpSocketReceiver messageReceiver = ctx.lookup(TcpSocketReceiver.class);//创建netty server
+		//初始化消息树接收器
 		messageReceiver.init();
 
 		Runtime.getRuntime().addShutdownHook(new Thread() {

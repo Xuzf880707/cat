@@ -144,6 +144,7 @@ public class StatusUpdateTask implements Task, Initializable {
 			int second = cal.get(Calendar.SECOND);
 
 			// try to avoid send heartbeat at 59-01 second
+			//尝试避开在59-01秒这个期间发送心跳检查，因为这个点是统计聚合的高峰期
 			if (second < 2 || second > 58) {
 				try {
 					Thread.sleep(1000);
@@ -156,7 +157,7 @@ public class StatusUpdateTask implements Task, Initializable {
 		}
 
 		try {
-			buildClasspath();
+			buildClasspath();//获得jar包路径
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -171,14 +172,18 @@ public class StatusUpdateTask implements Task, Initializable {
 			long start = MilliSecondTimer.currentTimeMillis();
 
 			if (m_manager.isCatEnabled()) {
+				//开始创建心跳的事务，并发送
 				Transaction t = cat.newTransaction("System", "Status");
 				Heartbeat h = cat.newHeartbeat("Heartbeat", m_ipAddress);
 				StatusInfo status = new StatusInfo();
 
 				t.addData("dumpLocked", m_manager.isDumpLocked());
+				//StatusInfoCollector通过大量访问者模式的代码实现了将各种指标set到status中的功能，
+				// 之后将status封装到HeartBeatMessage中，按照一般对于message的处理流程，flush到消息传输层中
 				StatusInfoCollector collector = new StatusInfoCollector(m_statistics, m_jars);
 
 				try {
+					//收集客户机系统信息，包括磁盘、内存、线程、jvm等，并发送给cat-core
 					status.accept(collector.setDumpLocked(m_manager.isDumpLocked()));
 
 					buildExtensionData(status);
@@ -196,11 +201,12 @@ public class StatusUpdateTask implements Task, Initializable {
 			}
 
 			try {
+				//整除，换算成分钟
 				long current = System.currentTimeMillis() / 1000 / 60;
-				int min = (int) (current % (60));
+				int min = (int) (current % (60));//计算下当前是一个小时的第几分钟
 
 				// refresh config 3 minute
-				if (min % 3 == 0) {
+				if (min % 3 == 0) {//如果当前所处分钟整除3，就刷新下客户端配置
 					m_manager.refreshConfig();
 				}
 			} catch (Exception e) {
@@ -208,7 +214,7 @@ public class StatusUpdateTask implements Task, Initializable {
 			}
 
 			long elapsed = MilliSecondTimer.currentTimeMillis() - start;
-
+			//每隔60s发送一次心跳，并获得一次客户端的内存和系统信息
 			if (elapsed < m_interval) {
 				try {
 					Thread.sleep(m_interval - elapsed);

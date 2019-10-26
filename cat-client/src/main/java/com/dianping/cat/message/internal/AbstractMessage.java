@@ -45,6 +45,10 @@ public abstract class AbstractMessage implements Message {
 		m_timestampInMillis = MilliSecondTimer.currentTimeMillis();
 	}
 
+	/**
+	 * 开始分离处理keyValuePairs，用多个值用&拼接
+	 * @param keyValuePairs key-value pairs like 'a=1&b=2&...'
+	 */
 	@Override
 	public void addData(String keyValuePairs) {
 		if (m_data == null) {

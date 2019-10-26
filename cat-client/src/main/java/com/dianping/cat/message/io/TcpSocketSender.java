@@ -93,10 +93,15 @@ public class TcpSocketSender implements Task, MessageSender, LogEnabled {
 		return "TcpSocketSender";
 	}
 
+	/***
+	 * 初始化netty客户端
+	 * @param addresses
+	 */
 	@Override
 	public void initialize(List<InetSocketAddress> addresses) {
 		m_channelManager = new ChannelManager(m_logger, addresses, m_configManager, m_factory);
-
+		//启动当前客户端，开启一个上报线程，上报线程一直读取内存队列，获取要发送的消息树，
+		// 调用 sendInternal(MessageTree tree) 方法将消息树发送到服务器。
 		Threads.forGroup("cat").start(this);
 		Threads.forGroup("cat").start(m_channelManager);
 
@@ -230,12 +235,13 @@ public class TcpSocketSender implements Task, MessageSender, LogEnabled {
 			}
 		}
 	}
-
+	//上报线程一直读取内存队列，获取要发送的消息树，调用 sendInternal(MessageTree tree) 方法将消息树发送到服务器。
+	//客户端就实现了消息的异步化、队列化，从而保证日志的记录不会因为CAT系统异常而影响主业务线程。
 	@Override
 	public void run() {
 		m_active = true;
 
-		while (m_active) {
+		while (m_active) {//判断服务端是否存活
 			processAtomicMessage();
 			processNormalMessage();
 		}
@@ -267,7 +273,7 @@ public class TcpSocketSender implements Task, MessageSender, LogEnabled {
 			if (tree.canDiscard() && sampleRatio < 1.0 && (!tree.isHitSample())) {
 				processTreeInClient(tree);
 			} else {
-				offer(tree);
+				offer(tree);//插入内存队列
 			}
 		}
 	}
@@ -277,10 +283,12 @@ public class TcpSocketSender implements Task, MessageSender, LogEnabled {
 	}
 
 	public void sendInternal(ChannelFuture channel, MessageTree tree) {
-		if (tree.getMessageId() == null) {
+		if (tree.getMessageId() == null) {//判断是否分配MessageID，没有则分配
 			tree.setMessageId(m_factory.getNextId());
 		}
-
+		//对消息树进行序列化
+		//通过JDK自带的公共接口编码的字节会有很多冗余信息来保证不同对象与字节之间的正确编解码
+		//通过自定义的序列化方案可以节省许多不必要的字节信息，保证网络传输的高效性。
 		ByteBuf buf = m_codec.encode(tree);
 
 		int size = buf.readableBytes();

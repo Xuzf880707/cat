@@ -205,7 +205,7 @@ public class Cat {
             return NullMessageManager.NULL_MESSAGE_MANAGER;
         }
     }
-
+    //查看获取生产者的方法，检查是否已初始化，如果没有初始化则进行初始化，深度咱们就先到这里
     public static MessageProducer getProducer() {
         try {
             checkAndInitialize();
@@ -616,6 +616,10 @@ public class Cat {
     }
 
     /**
+     * 创建一个事务，
+     *  1. 先获取上下文如果没有则新建;
+     *  2. 如果可以记录消息，则立马创建一个默认事务DefaultTransaction;
+     *  3. 开启执行，返回事务实例，供下文调用;
      * Create a new transaction with given type and name.
      *
      * @param type transaction type

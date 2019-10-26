@@ -61,7 +61,7 @@ public class DefaultRemoteServersUpdater implements ServersUpdater {
 			ModelRequest request = new ModelRequest(domain, time);
 
 			if (m_service.isEligable(request)) {
-				ModelResponse<StateReport> response = m_service.invoke(request);
+				ModelResponse<StateReport> response = m_service.invoke(request);//BaseCompositeModelService
 				StateReport report = response.getModel();
 
 				return report;

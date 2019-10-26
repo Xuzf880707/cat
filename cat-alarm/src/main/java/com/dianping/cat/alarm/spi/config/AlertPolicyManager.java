@@ -65,6 +65,7 @@ public class AlertPolicyManager implements Initializable {
 	@Override
 	public void initialize() throws InitializationException {
 		try {
+			//查询config表
 			Config config = m_configDao.findByName(CONFIG_NAME, ConfigEntity.READSET_FULL);
 			String content = config.getContent();
 
@@ -105,10 +106,12 @@ public class AlertPolicyManager implements Initializable {
 
 	public List<AlertChannel> queryChannels(String typeName, String groupName, String levelName) {
 		try {
+			//找出配置的 level 标签
 			Level level = queryLevel(typeName, groupName, levelName);
 			if (level == null) {
 				return new ArrayList<AlertChannel>();
 			} else {
+				//获得level标签中的 send类型，并解析出相应的通知类型
 				String send = level.getSend();
 				String[] sends = send.split(",");
 				List<AlertChannel> channels = new ArrayList<AlertChannel>();

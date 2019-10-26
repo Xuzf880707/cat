@@ -24,6 +24,8 @@ public enum AlertChannel {
 
 	SMS("sms"),
 
+	DINGDING("dingding"),
+
 	WEIXIN("weixin"),
 
 	DX("dx");

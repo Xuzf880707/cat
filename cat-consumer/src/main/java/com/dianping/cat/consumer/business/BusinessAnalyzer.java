@@ -137,21 +137,21 @@ public class BusinessAnalyzer extends AbstractMessageAnalyzer<BusinessReport> im
 
 		if (!isMonitor) {
 			String name = metric.getName();
-			String data = (String) metric.getData();
-			String status = metric.getStatus();
-			ConfigItem config = parseValue(status, data);
+			String data = (String) metric.getData();//获得Metric对应的值
+			String status = metric.getStatus();//获得Metric的status，比如S、C、S,C
+			ConfigItem config = parseValue(status, data);//将data和data转换成config
 
 			if (config != null) {
-				long current = metric.getTimestamp() / 1000 / 60;
-				int min = (int) (current % 60);
+				long current = metric.getTimestamp() / 1000 / 60;//获得分钟
+				int min = (int) (current % 60);//获得属于某个小时内的哪一分钟
 				BusinessItem businessItem = report.findOrCreateBusinessItem(name);
 				Segment seg = businessItem.findOrCreateSegment(min);
 
-				businessItem.setType(status);
+				businessItem.setType(status);//设置status,比如S、C、S,C
 
 				seg.incCount(config.getCount());
 				seg.incSum(config.getValue());
-				seg.setAvg(seg.getSum() / seg.getCount());
+				seg.setAvg(seg.getSum() / seg.getCount());//计算出当前分钟的平均值了
 
 				config.setTitle(name);
 

@@ -37,7 +37,7 @@ public class DefaultMessageHandler extends ContainerHolder implements MessageHan
 	public void enableLogging(Logger logger) {
 		m_logger = logger;
 	}
-
+	//开始消费消息，交给RealtimeConsumer处理
 	@Override
 	public void handle(MessageTree tree) {
 		if (m_consumer == null) {

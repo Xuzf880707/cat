@@ -30,7 +30,7 @@ import com.dianping.cat.report.alert.transaction.TransactionAlert;
 
 @Named
 public class AlarmManager extends ContainerHolder {
-
+	//初始化并启动告警服务
 	public void startAlarm() {
 		BusinessAlert businessAlert = lookup(BusinessAlert.class);
 		ExceptionAlert exceptionAlert = lookup(ExceptionAlert.class);

@@ -64,7 +64,7 @@ public class DefaultTransaction extends AbstractMessage implements Transaction {
 		}
 		return this;
 	}
-
+	//所有的消息事务， 都会由 Transaction 对象的 complete 方法完成最终的发送流程
 	@Override
 	public void complete() {
 		try {
@@ -79,8 +79,8 @@ public class DefaultTransaction extends AbstractMessage implements Transaction {
 				if (m_durationInMicro == -1) {
 					m_durationInMicro = (System.nanoTime() - m_durationStart) / 1000L;
 				}
-				setCompleted(true);
-				if (m_manager != null) {
+				setCompleted(true);//设置complete标志位
+				if (m_manager != null) {//交给DefaultMessageManager
 					m_manager.end(this);
 				}
 			}

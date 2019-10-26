@@ -84,23 +84,25 @@ public class PeriodManager implements Task {
 	public String getName() {
 		return "RealtimeConsumer-PeriodManager";
 	}
-
+	//计算当前时间所处的周期的开始时间，是当前时间的整点时间，
+	// 比如现在是 13:50， 那么startTime=13:00，然后entTime=startTime + duration 算得结束时间为 14:00
 	public void init() {
 		long startTime = m_strategy.next(System.currentTimeMillis());
 
 		startPeriod(startTime);
 	}
-
+	//每隔1秒钟会计算是否需要开启一个新的周期
 	@Override
 	public void run() {
 		while (m_active) {
 			try {
 				long now = System.currentTimeMillis();
+				//
 				long value = m_strategy.next(now);
-
+				//value>0就开启新的线程
 				if (value > 0) {
 					startPeriod(value);
-				} else if (value < 0) {
+				} else if (value < 0) {//value<0的化，会异步开启一个新线程用来结束结束上一个周期
 					// last period is over,make it asynchronous
 					Threads.forGroup("cat").start(new EndTaskThread(-value));
 				}
@@ -120,12 +122,13 @@ public class PeriodManager implements Task {
 	public void shutdown() {
 		m_active = false;
 	}
-
+	//据起始结束时间来创建 Period 对象，传入分析器的指针。并将周期对象加入到m_periods列表交给PeriodManager管理
 	private void startPeriod(long startTime) {
-		long endTime = startTime + m_strategy.getDuration();
+		long endTime = startTime + m_strategy.getDuration();//获得当前周期的结束时间
 		Period period = new Period(startTime, endTime, m_analyzerManager, m_serverStateManager, m_logger);
-
+		//周期对象加入到m_periods列表交给PeriodManager管理
 		m_periods.add(period);
+		//启动period周期，就是开启period下所有周期任务(PeriodTask)线程
 		period.start();
 	}
 
@@ -142,6 +145,9 @@ public class PeriodManager implements Task {
 			return "End-Consumer-Task";
 		}
 
+		/***
+		 * 移除 m_startTime对应的Period周期
+		 */
 		@Override
 		public void run() {
 			endPeriod(m_startTime);
